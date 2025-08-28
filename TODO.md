@@ -32,15 +32,17 @@ Lista detallada de tareas verificadas comparando el plan técnico vs la implemen
 - [x] Visualización de estadísticas en tiempo real ✅
 - [x] Exportación de leads a CSV ✅
 
-## ⚠️ Items Parcialmente Implementados
-
 ### Backend - Avanzado
-- [⚠] Sistema de estadísticas completo (parcialmente implementado) ⚠️
-  - Tiempo estimado: 4-6 horas
-  - Prioridad: Media
-- [⚠] Endpoints de control avanzado (detener jobs, pausar, etc.) ⚠️
-  - Tiempo estimado: 6-8 horas
-  - Prioridad: Alta
+- [x] Endpoints de control avanzado (detener jobs, pausar, etc.) ✅
+  - Tiempo invertido: 8 horas
+  - Fecha de implementación: 2025-08-28
+  - Tests implementados y verificados con devactivo.com
+- [x] Sistema de estadísticas completo ✅
+  - Tiempo invertido: 12 horas
+  - Fecha de implementación: 2025-08-28
+  - Tests implementados y verificados con devactivo.com
+
+## ⚠️ Items Parcialmente Implementados
 
 ### Frontend - Avanzado
 - [⚠] Panel de estadísticas en tiempo real completo ⚠️
@@ -136,15 +138,13 @@ Lista detallada de tareas verificadas comparando el plan técnico vs la implemen
 
 ## 📊 Resumen de Prioridades
 
-### Alta Prioridad (24-32 horas total)
-- Sistema de estadísticas completo
-- Endpoints de control avanzado
+### Alta Prioridad (8-16 horas total)
 - Panel de estadísticas en tiempo real completo
 - Scraping encadenado y gestión de profundidad
 - Manejo de errores en endpoints
 - Manejo de errores de red
 
-### Media Prioridad (65-85 horas total)
+### Media Prioridad (59-79 horas total)
 - Sistema de filtros avanzados
 - Pestaña de logs del sistema completa
 - Pipelines de filtrado completos
@@ -169,8 +169,8 @@ Lista detallada de tareas verificadas comparando el plan técnico vs la implemen
 
 ## 📈 Progreso General
 
-- **Completado:** 25% (8/32 items)
-- **Parcialmente completado:** 31% (10/32 items)
+- **Completado:** 31% (10/32 items)
+- **Parcialmente completado:** 25% (8/32 items)
 - **Faltante:** 31% (10/32 items)
 - **Con problemas:** 13% (4/32 items)
 
@@ -179,17 +179,15 @@ Lista detallada de tareas verificadas comparando el plan técnico vs la implemen
 1. **Priorizar items de Alta Prioridad** para estabilizar el sistema
 2. **Mejorar el manejo de errores** en ambos frontend y backend
 3. **Completar los pipelines de filtrado** para mejorar calidad de datos
-4. **Implementar endpoints de control avanzado** para mejor experiencia de usuario
+4. **Implementar el panel de estadísticas en tiempo real completo** para mejor monitoreo
 
 ## 📅 Plan de Implementación Sugerido
 
 ### Semana 1-2: Estabilización
-- Sistema de estadísticas completo (8-12 horas)
-- Endpoints de control avanzado (8-12 horas)
+- Panel de estadísticas en tiempo real completo (12-16 horas)
 - Manejo de errores mejorado (10-14 horas)
 
 ### Semana 3-4: Mejoras Funcionales
-- Panel de estadísticas en tiempo real (12-16 horas)
 - Pipelines de filtrado completos (15-20 horas)
 - Middlewares de rate-limiting avanzado (10-14 horas)
 
