@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database.database import get_db
 from ..database.models import ScrapingQueue
-from ..core.exceptions import NotFoundException, ValidationException
+from ..core.exceptions_new import NotFoundException, ValidationException
 from pydantic import BaseModel
 from typing import List
 import uuid

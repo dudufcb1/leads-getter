@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from ..database.database import get_db
 from ..database.models import ScrapingQueue, ScrapingLog
 from ..scraper.run_scraper import run_scraper
-from ..core.exceptions import (
+from ..core.exceptions_new import (
     DatabaseException,
     ScrapingException,
     ValidationException,

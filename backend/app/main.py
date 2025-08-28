@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api import jobs, stats, leads, control, advanced_stats, auth, config, realtime_dashboard
 from .database.database import create_tables
 from .core.config import settings
-from .core.error_handler import add_error_handlers
+from .core.error_handler_new import add_error_handlers
 from .core.logging_config import setup_logging
 
 # Configurar logging
