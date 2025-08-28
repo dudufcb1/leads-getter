@@ -15,8 +15,8 @@ from datetime import datetime, timedelta
 
 from ..database.database import get_db
 from ..database.models import Website, Email, ScrapingQueue, ScrapingSession, ScrapingLog, SystemStats, ScrapingStats, JobStats
-from ..core.exceptions import DatabaseException
-from ..core.error_decorator import handle_errors
+from ..core.exceptions_new import DatabaseException
+from ..core.error_decorator_new import handle_errors
 from ..core.cache import cached, cache, get_cached_stats, set_cached_stats, invalidate_stats_cache
 
 router = APIRouter()

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from ..database.database import get_db
 from ..database.models import Website, Email, ScrapingQueue, ScrapingSession, ScrapingLog
-from ..core.exceptions import NotFoundException
+from ..core.exceptions_new import NotFoundException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta

@@ -113,7 +113,7 @@ Lista detallada de tareas verificadas comparando el plan técnico vs la implemen
 ## 🐛 Items Implementados pero con Problemas
 
 ### Backend - Issues
-- [🐛] Manejo de errores en endpoints no es consistente 🐛
+- [✅] Manejo de errores en endpoints no es consistente 🐛
   - Tiempo estimado: 4-6 horas
   - Prioridad: Alta
 - [🐛] Validación de datos de entrada incompleta 🐛
