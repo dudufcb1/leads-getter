@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Optional
 from pydantic_settings import BaseSettings
+from .system_config import config
 
 
 class Settings(BaseSettings):
@@ -17,18 +18,22 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Configuración de la base de datos
-    DATABASE_URL: str = f"sqlite:///{Path(__file__).parent.parent.parent / 'leads_generator.db'}"
+    DATABASE_URL: str = config.database_url
 
     # Configuración del scraper
-    DEFAULT_DEPTH: int = 3
-    DEFAULT_DELAY: float = 2.0
-    DEFAULT_LANGUAGES: list = ["es", "en"]
+    DEFAULT_DEPTH: int = config.max_depth
+    DEFAULT_DELAY: float = config.delay
+    DEFAULT_LANGUAGES: list = config.allowed_languages
 
     # Configuración de Scrapy
-    USER_AGENT: str = "leads-generator (+https://github.com/your-repo/leads-generator)"
-    DOWNLOAD_DELAY: float = 1.0
-    CONCURRENT_REQUESTS: int = 16
-    CONCURRENT_REQUESTS_PER_DOMAIN: int = 8
+    USER_AGENT: str = config.scrapy_settings.get("USER_AGENT", "leads-generator (+https://github.com/your-repo/leads-generator)")
+    DOWNLOAD_DELAY: float = config.delay
+    CONCURRENT_REQUESTS: int = config.scrapy_settings.get("CONCURRENT_REQUESTS", 16)
+    CONCURRENT_REQUESTS_PER_DOMAIN: int = config.scrapy_settings.get("CONCURRENT_REQUESTS_PER_DOMAIN", 8)
+
+    # Configuración de logging
+    LOG_LEVEL: str = config.log_level
+    LOG_FILE_PATH: str = config.log_file
 
     class Config:
         env_file = ".env"

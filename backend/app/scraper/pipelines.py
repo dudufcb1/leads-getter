@@ -49,7 +49,7 @@ class DatabasePipeline:
                     page_quality_score=item.get('page_quality_score', 0),
                     email_quality_score=item.get('email_quality_score', 0.0),
                     contact_score=item.get('contact_score', 0),
-                    content_type=item.get('content_type'),
+                    content_type_detected=item.get('content_type'),
                     has_business_keywords=','.join(item.get('has_business_keywords', [])) if item.get('has_business_keywords') else None,
 
                     # Campos de validación
@@ -73,6 +73,7 @@ class DatabasePipeline:
                     response_time=item.get('response_time'),
                     page_size=item.get('page_size'),
                     http_status=item.get('http_status'),
+                    content_type_scraping=item.get('content_type'),
                     quality_score=item.get('quality_score', 0),
                     email_count=len(item.get('emails', [])),
                     last_scraped=item.get('scraped_at'),
@@ -88,7 +89,7 @@ class DatabasePipeline:
                 website.page_quality_score = item.get('page_quality_score', website.page_quality_score)
                 website.email_quality_score = item.get('email_quality_score', website.email_quality_score)
                 website.contact_score = item.get('contact_score', website.contact_score)
-                website.content_type = item.get('content_type', website.content_type)
+                website.content_type_detected = item.get('content_type', website.content_type_detected)
                 website.has_business_keywords = ','.join(item.get('has_business_keywords', [])) if item.get('has_business_keywords') else website.has_business_keywords
                 website.is_spam = item.get('is_spam', website.is_spam)
                 website.language_confidence = item.get('language_confidence', website.language_confidence)
@@ -101,6 +102,7 @@ class DatabasePipeline:
                 website.title = item.get('title', website.title)
                 website.description = item.get('description', website.description)
                 website.keywords = item.get('keywords', website.keywords)
+                website.content_type_scraping = item.get('content_type', website.content_type_scraping)
                 website.email_count = len(item.get('emails', []))
                 website.last_scraped = item.get('scraped_at', website.last_scraped)
                 website.scrape_count += 1
@@ -188,7 +190,8 @@ class LanguageFilterPipeline:
         """Filtra items basado en el idioma detectado."""
         item_language = item.get('language')
 
-        if item_language and item_language not in self.allowed_languages:
+        # Permitir contenido en español y contenido con idioma desconocido
+        if item_language and item_language not in self.allowed_languages and item_language != 'unknown':
             spider.logger.info(f"🌍 Filtering out item with language '{item_language}': {item.get('url')}")
             from scrapy.exceptions import DropItem
             raise DropItem(f"Language '{item_language}' not in allowed languages")
@@ -587,11 +590,17 @@ class ContentValidationPipeline:
 
     def _has_business_keywords(self, item):
         """Verifica si el contenido contiene palabras clave de negocio."""
-        text_content = ' '.join([
-            item.get('title', ''),
-            item.get('description', ''),
-            item.get('url', '')
-        ]).lower()
+        # Asegurarse de que todos los valores sean strings antes de unirlos
+        title = item.get('title', '') or ''
+        description = item.get('description', '') or ''
+        url = item.get('url', '') or ''
+        
+        # Convertir a string si no lo son
+        title = str(title) if title is not None else ''
+        description = str(description) if description is not None else ''
+        url = str(url) if url is not None else ''
+        
+        text_content = ' '.join([title, description, url]).lower()
 
         found_keywords = []
         for keyword in self.business_keywords:
@@ -602,10 +611,10 @@ class ContentValidationPipeline:
 
     def _detect_content_type(self, item):
         """Detecta el tipo de contenido de la página."""
-        url = item.get('url', '').lower()
-        title = item.get('title', '').lower()
-        description = item.get('description', '').lower()
-
+        url = (item.get('url', '') or '').lower()
+        title = (item.get('title', '') or '').lower()
+        description = (item.get('description', '') or '').lower()
+        
         # Patrones para diferentes tipos de contenido
         content_patterns = {
             'business': [
@@ -625,36 +634,51 @@ class ContentValidationPipeline:
                 r'portafolio', r'portfolio', r'proyecto', r'project', r'trabajo'
             ]
         }
-
+        
+        # Asegurarse de que los valores sean strings
+        url = str(url) if url is not None else ''
+        title = str(title) if title is not None else ''
+        description = str(description) if description is not None else ''
+        
+        text_content = ' '.join([url, title, description])
+        
         for content_type, patterns in content_patterns.items():
             for pattern in patterns:
-                if (re.search(pattern, url) or
-                    re.search(pattern, title) or
-                    re.search(pattern, description)):
+                if re.search(pattern, text_content):
                     return content_type
-
+        
         return 'unknown'
 
     def _calculate_contact_score(self, item):
         """Calcula una puntuación de información de contacto."""
         score = 0
-
+        
         # Emails encontrados
-        emails = item.get('emails', [])
+        emails = item.get('emails', []) or []
+        # Asegurarse de que emails sea una lista
+        if not isinstance(emails, list):
+            emails = []
         score += len(emails) * 10
-
+        
         # Palabras clave de contacto
         contact_keywords = ['contacto', 'contact', 'teléfono', 'phone', 'dirección', 'address']
-        text_content = ' '.join([
-            item.get('title', ''),
-            item.get('description', ''),
-            item.get('url', '')
-        ]).lower()
-
+        
+        # Obtener valores y asegurarse de que sean strings
+        title = item.get('title', '') or ''
+        description = item.get('description', '') or ''
+        url = item.get('url', '') or ''
+        
+        # Convertir a string si no lo son
+        title = str(title) if title is not None else ''
+        description = str(description) if description is not None else ''
+        url = str(url) if url is not None else ''
+        
+        text_content = ' '.join([title, description, url]).lower()
+        
         for keyword in contact_keywords:
             if keyword in text_content:
                 score += 5
-
+        
         return min(score, 100)  # Máximo 100
 
 
@@ -881,3 +905,11 @@ class StatsPipeline:
         """Obtiene estadísticas de tipos de contenido."""
         content_stats = {k: v for k, v in self.stats.items() if k.startswith('content_type_')}
         return {k.replace('content_type_', ''): v for k, v in content_stats.items()}
+
+# Importar pipelines adicionales
+from .additional_pipelines import (
+    BusinessRelevancePipeline,
+    EmailValidationPipeline,
+    ContentQualityPipeline,
+    DuplicateContentPipeline
+)

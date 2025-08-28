@@ -24,7 +24,7 @@ class Website(Base):
     response_time = Column(Integer, nullable=True)  # Tiempo de respuesta en ms
     page_size = Column(Integer, nullable=True)  # Tamaño de página en bytes
     http_status = Column(Integer, nullable=True)  # Código de estado HTTP
-    content_type = Column(String(100), nullable=True)  # Tipo de contenido
+    content_type_scraping = Column(String(100), nullable=True)  # Tipo de contenido para scraping
     quality_score = Column(Integer, default=0, nullable=False)  # Puntuación de calidad (0-100)
     email_count = Column(Integer, default=0, nullable=False)  # Número de emails encontrados
     last_scraped = Column(DateTime(timezone=True), nullable=True)  # Última vez scrapeado
@@ -41,9 +41,9 @@ class Website(Base):
 
     # Campos avanzados de calidad y scoring
     page_quality_score = Column(Integer, default=0, nullable=False)  # Puntuación de calidad de página (0-100)
-    email_quality_score = Column(Float, default=0.0, nullable=False)  # Calidad promedio de emails (0-1)
+    email_quality_score = Column(Float, default=0.0, nullable=False) # Calidad promedio de emails (0-1)
     contact_score = Column(Integer, default=0, nullable=False)  # Puntuación de información de contacto (0-100)
-    content_type = Column(String(50), nullable=True)  # Tipo de contenido detectado
+    content_type_detected = Column(String(50), nullable=True)  # Tipo de contenido detectado
     has_business_keywords = Column(Text, nullable=True)  # JSON array de palabras clave encontradas
 
     # Campos de validación y filtrado
@@ -106,12 +106,16 @@ class ScrapingQueue(Base):
     __tablename__ = "scraping_queue"
 
     id = Column(Integer, primary_key=True, index=True)
-    url = Column(String(500), unique=True, nullable=False, index=True)
+    job_id = Column(String(100), unique=True, nullable=False, index=True)
+    url = Column(String(500), nullable=False, index=True)
     priority = Column(Integer, default=0, nullable=False, index=True)
     depth_level = Column(Integer, default=0, nullable=False)
-    status = Column(Enum("pending", "processing", "completed", "failed", name="queue_status"),
+    status = Column(Enum("pending", "processing", "completed", "failed", "paused", "cancelled", name="queue_status"),
                    default="pending", nullable=False)
     attempts = Column(Integer, default=0, nullable=False)
+    progress = Column(Integer, default=0, nullable=False)  # Progreso del job (0-100)
+    total_items = Column(Integer, default=0, nullable=False)  # Total de items a procesar
+    processed_items = Column(Integer, default=0, nullable=False)  # Items procesados
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -170,3 +174,96 @@ class ScrapingLog(Base):
 
     def __repr__(self):
         return f"<ScrapingLog(id={self.id}, level='{self.level}', url='{self.url}')>"
+
+
+class SystemStats(Base):
+    """Modelo para almacenar estadísticas del sistema."""
+    __tablename__ = "system_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Métricas de rendimiento del sistema
+    cpu_usage = Column(Float, nullable=True)  # Porcentaje de uso de CPU
+    memory_usage = Column(Float, nullable=True)  # Porcentaje de uso de memoria
+    disk_usage = Column(Float, nullable=True)  # Porcentaje de uso de disco
+    network_io = Column(Text, nullable=True)  # JSON con estadísticas de I/O de red
+    
+    # Métricas de la base de datos
+    db_connections = Column(Integer, nullable=True)  # Número de conexiones activas
+    db_queries_per_second = Column(Float, nullable=True)  # Consultas por segundo
+    db_avg_query_time = Column(Float, nullable=True)  # Tiempo promedio de consulta
+    
+    # Métricas de la cola de jobs
+    queue_size = Column(Integer, nullable=True)  # Tamaño de la cola
+    active_jobs = Column(Integer, nullable=True)  # Número de jobs activos
+    pending_jobs = Column(Integer, nullable=True)  # Número de jobs pendientes
+    
+    # Tiempo de actividad
+    uptime = Column(Integer, nullable=True)  # Segundos de actividad
+    
+    def __repr__(self):
+        return f"<SystemStats(id={self.id}, timestamp='{self.timestamp}')>"
+
+
+class ScrapingStats(Base):
+    """Modelo para almacenar estadísticas de scraping."""
+    __tablename__ = "scraping_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    session_id = Column(String(100), ForeignKey("scraping_sessions.session_id"), nullable=True)
+    
+    # Velocidad de scraping
+    urls_per_minute = Column(Float, nullable=True)  # URLs procesadas por minuto
+    avg_processing_time = Column(Float, nullable=True)  # Tiempo promedio por página
+    
+    # Tasa de éxito/fracaso
+    success_rate = Column(Float, nullable=True)  # Porcentaje de éxito
+    failure_rate = Column(Float, nullable=True)  # Porcentaje de fracaso
+    
+    # Distribución por dominio
+    domain_stats = Column(Text, nullable=True)  # JSON con estadísticas por dominio
+    
+    # Estadísticas de duplicados
+    duplicates_found = Column(Integer, nullable=True)  # Número de duplicados detectados
+    duplicates_filtered = Column(Integer, nullable=True)  # Número de duplicados filtrados
+    
+    # Metadata
+    extra_metadata = Column(Text, nullable=True)  # JSON con metadata adicional
+    
+    # Relación con sesión
+    session = relationship("ScrapingSession", back_populates="scraping_stats")
+
+    def __repr__(self):
+        return f"<ScrapingStats(id={self.id}, session_id='{self.session_id}')>"
+
+
+class JobStats(Base):
+    """Modelo para almacenar estadísticas de jobs."""
+    __tablename__ = "job_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    job_id = Column(String(100), ForeignKey("scraping_queue.job_id"), nullable=False)
+    
+    # Duración y eficiencia
+    duration = Column(Integer, nullable=True)  # Duración en segundos
+    efficiency = Column(Float, nullable=True)  # Eficiencia del job (leads/urls visitadas)
+    
+    # Distribución de estados
+    status_distribution = Column(Text, nullable=True)  # JSON con distribución de estados
+    
+    # Historial de rendimiento
+    performance_history = Column(Text, nullable=True)  # JSON con historial de rendimiento
+    
+    # Relación con job
+    job = relationship("ScrapingQueue", back_populates="job_stats")
+
+    def __repr__(self):
+        return f"<JobStats(id={self.id}, job_id='{self.job_id}')>"
+
+
+# Agregar relaciones a los modelos existentes
+ScrapingSession.scraping_stats = relationship("ScrapingStats", back_populates="session", cascade="all, delete-orphan")
+ScrapingQueue.job_stats = relationship("JobStats", back_populates="job", cascade="all, delete-orphan")

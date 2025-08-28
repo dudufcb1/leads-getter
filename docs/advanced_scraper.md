@@ -449,6 +449,8 @@ python backend/run_backend.py
 - **Cloud deployment**: Docker and Kubernetes support
 - **Advanced analytics**: Machine learning for lead scoring
 
+> ⚠️ **Autorización de Machine Learning Requerida**: La funcionalidad de machine learning para lead scoring requiere autorización explícita del usuario para su implementación. No está incluida en el scope actual del proyecto y se implementará solo si el usuario lo solicita específicamente.
+
 ### Integration Points
 - **CRM integration**: Direct export to CRM systems
 - **Email validation**: Third-party email verification

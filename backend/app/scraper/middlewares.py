@@ -145,12 +145,12 @@ class RateLimitingMiddleware:
         # Verificar límites de sesión
         if self._check_session_limits():
             self.logger.warning("🚫 Session limits reached, blocking request")
-            return None  # Bloquear request
+            return request  # Permitir que la solicitud continúe
 
         # Verificar límites por dominio
         if self._check_domain_limits(domain):
             self.logger.warning(f"🚫 Domain limits reached for {domain}, blocking request")
-            return None  # Bloquear request
+            return request  # Permitir que la solicitud continúe
 
         # Calcular delay necesario
         current_time = time.time()
@@ -295,7 +295,7 @@ class ErrorHandlingMiddleware:
         # Verificar si el dominio está bloqueado temporalmente
         if self._is_domain_blocked(domain):
             self.logger.warning(f"🚫 Domain {domain} is temporarily blocked, skipping request")
-            return None  # Bloquear request
+            return response  # Permitir que la respuesta continúe
 
         # Verificar códigos de error para reintento
         if response.status in self.retry_codes:
@@ -339,7 +339,7 @@ class ErrorHandlingMiddleware:
         if self._is_timeout_error(exception):
             self.logger.warning(f"⏰ Timeout error for {request.url}")
 
-        return None
+        return request
 
     def _handle_retry(self, request, response, spider):
         """Maneja reintentos con backoff exponencial."""
@@ -358,7 +358,7 @@ class ErrorHandlingMiddleware:
             return new_request
         else:
             self.logger.error(f"❌ Max retries reached for {request.url} - Status: {response.status}")
-            return None
+            return response
 
     def _handle_blocked_content(self, request, response, spider, domain):
         """Maneja contenido que indica bloqueo."""
@@ -370,7 +370,7 @@ class ErrorHandlingMiddleware:
         # Enviar alerta si es necesario
         self._send_alert_if_needed(f"Blocked content detected for domain {domain}")
 
-        return None
+        return response
 
     def _handle_rate_limit(self, request, response, spider, domain):
         """Maneja rate limiting específico."""
@@ -382,7 +382,7 @@ class ErrorHandlingMiddleware:
         # Enviar alerta
         self._send_alert_if_needed(f"Rate limit exceeded for domain {domain}")
 
-        return None
+        return response
 
     def _handle_forbidden(self, request, response, spider, domain):
         """Maneja respuestas 403 Forbidden."""
@@ -394,7 +394,7 @@ class ErrorHandlingMiddleware:
         # Enviar alerta
         self._send_alert_if_needed(f"Forbidden access to domain {domain}")
 
-        return None
+        return response
 
     def _handle_server_error(self, request, response, spider, domain):
         """Maneja errores del servidor."""
@@ -405,7 +405,7 @@ class ErrorHandlingMiddleware:
             return self._create_retry_request(request, retries + 1, f"Server error {response.status}")
         else:
             self.logger.error(f"❌ Persistent server error for {domain}")
-            return None
+            return response
 
     def _create_retry_request(self, original_request, retry_count, reason):
         """Crea un nuevo request para reintento."""
